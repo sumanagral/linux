@@ -82,4 +82,7 @@ Run the following command inside your nested virtual machine
 
 cpuid -1 -l 0x4ffffffc
 
+Test leaf node 0x4FFFFFFD
+Run the following command inside your nested virtual machine
 
+cpuid -1 -l 0x4ffffffd
