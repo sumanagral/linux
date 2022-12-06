@@ -26,6 +26,7 @@
 #include "trace.h"
 #include "pmu.h"
 
+
 /*
  * Unlike "struct cpuinfo_x86.x86_capability", kvm_cpu_caps doesn't need to be
  * aligned to sizeof(unsigned long) because it's not accessed via bitops.
@@ -1493,6 +1494,12 @@ bool kvm_cpuid(struct kvm_vcpu *vcpu, u32 *eax, u32 *ebx,
 }
 EXPORT_SYMBOL_GPL(kvm_cpuid);
 
+u32 total_exits = 0;
+EXPORT_SYMBOL(total_exits);
+
+u64 total_proc_cycles = 0;
+EXPORT_SYMBOL(total_proc_cycles);
+
 int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 {
 	u32 eax, ebx, ecx, edx;
@@ -1502,7 +1509,22 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 
 	eax = kvm_rax_read(vcpu);
 	ecx = kvm_rcx_read(vcpu);
-	kvm_cpuid(vcpu, &eax, &ebx, &ecx, &edx, false);
+
+	if (eax == 0x4ffffffc) {
+		eax = total_exits;
+		ebx = 0;
+		ecx = 0;
+		edx = 0;
+		printk(KERN_INFO "0x4ffffffc TOTAL EXITS = %d", total_exits);
+	} else if (eax == 0x4ffffffd) {
+		printk(KERN_INFO "0x4ffffffd TOTAL TIME IN VMM = %llu\n", total_proc_cycles);
+		ebx = (total_proc_cycles >> 32);
+		ecx = (total_proc_cycles & 0xffffffff);
+		edx = 0;
+	} else {
+		kvm_cpuid(vcpu, &eax, &ebx, &ecx, &edx, false);
+	}
+
 	kvm_rax_write(vcpu, eax);
 	kvm_rbx_write(vcpu, ebx);
 	kvm_rcx_write(vcpu, ecx);

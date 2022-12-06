@@ -67,8 +67,20 @@
 #include "vmx.h"
 #include "x86.h"
 
+//assigment 2 chnages
+#include <asm/atomic.h>
+#include <asm/atomic64_64.h>
+#include <asm/msr.h>
+//end
+
 MODULE_AUTHOR("Qumranet");
 MODULE_LICENSE("GPL");
+
+
+//assignment 2 changes
+extern atomic64_t totalExits;
+extern atomic64_t totalTime;
+//end
 
 #ifdef MODULE
 static const struct x86_cpu_id vmx_cpu_id[] = {
@@ -6276,16 +6288,22 @@ void dump_vmcs(struct kvm_vcpu *vcpu)
 		       vmcs_read16(VIRTUAL_PROCESSOR_ID));
 }
 
+extern u32 total_exits;
+extern u64 total_proc_cycles;
 /*
  * The guest has exited.  See if we can fix it or if we need userspace
  * assistance.
  */
 static int __vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 {
+	u64 enter_rdtsc = rdtsc();
+
 	struct vcpu_vmx *vmx = to_vmx(vcpu);
 	union vmx_exit_reason exit_reason = vmx->exit_reason;
 	u32 vectoring_info = vmx->idt_vectoring_info;
 	u16 exit_handler_index;
+
+	total_exits++;
 
 	/*
 	 * Flush logged GPAs PML buffer, this will make dirty_bitmap more
@@ -6443,7 +6461,10 @@ static int __vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 						kvm_vmx_max_exit_handlers);
 	if (!kvm_vmx_exit_handlers[exit_handler_index])
 		goto unexpected_vmexit;
+//newchange
+		total_proc_cycles = total_proc_cycles + (rdtsc() - enter_rdtsc);
 
+//end
 	return kvm_vmx_exit_handlers[exit_handler_index](vcpu);
 
 unexpected_vmexit:
@@ -6462,7 +6483,17 @@ unexpected_vmexit:
 static int vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 {
 	int ret = __vmx_handle_exit(vcpu, exit_fastpath);
+	
+	//assignment 2 changes
+	u64 start_time = rdtsc();
+	atomic64_inc(&totalExits);
 
+	ret = __vmx_handle_exit(vcpu, exit_fastpath);
+
+	atomic64_add(rdtsc() - start_time, &totalTime);
+
+	//end
+	//
 	/*
 	 * Exit to user space when bus lock detected to inform that there is
 	 * a bus lock in guest.
