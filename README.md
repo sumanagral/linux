@@ -91,6 +91,6 @@ cpuid -1 -l 0x4ffffffd
 ## Questions
 
 ## 1) Comment on the frequency of exits – does the number of exits increase at a stable rate? Or are there more exits performed during certain VM operations? Approximately how many exits does a full VM boot entail?
-- Upon observing, we noticed that the frequency of exits increases gradually. There are more exits whenever a VM is booting. On testing we found that the total number of exits during a full VM boot is 956591. But of course this is not a hard number and it will change on every VM boot. The total number of exits could be more or less.
+- Analyzing, we found that the number of exits steadily grows. When a VM boots, there are more exits. During testing, we discovered that an entire VM boot results in a total of 956591 exits. However, this is obviously not a fixed number, and it will vary with each VM startup. There may be more or fewer exits overall.
 ## 2) Of the exit types defined in the SDM, which are the most frequent? Least?
-- The most frequent exit type is 48 and the least is 47, however, there are a lot of exit types which are not executed at all and their exit frequency is 0.
+- The most common and least common exit types are 48 and 47, respectively, however there are several exit types that are never performed and have an exit frequency of 0.
